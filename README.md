@@ -1,86 +1,195 @@
-# @alpha-sdk/client
+# Next.js Example App
 
-TypeScript client for the Alpha Camera REST API — control Sony cameras via REST.
+Public React / Next.js reference app for the Alpha Camera REST API.
+
+This example shows how to:
+
+- start or adopt the local camera server from a Next.js route
+- use the published TypeScript SDK client from `@alpha-sdk/client`
+- handle camera discovery, connect, reconnect, and SSE updates in app code
+- render live view and common camera controls in a browser UI
+
+It is the TypeScript counterpart to the macOS Swift example app.
+
+## Requirements
+
+- Node.js 20+
+- npm
+- a camera supported by the SDK
+- macOS / Windows / Linux machine that can run the published camera server binary
+
+## Camera setup
+
+For USB SDK detection, set the camera body to remote shooting / PC Remote mode.
+
+Typical Sony menu path:
+
+- `Menu -> Setup -> USB -> USB Connection Mode -> Remote Shooting` or `PC Remote`
+- `Menu -> Network -> Cnct./Remote Sht. -> Remote Shooting Function -> Remote Shooting -> On`
+
+Some models also require:
+
+- `Connect without Pairing`
+
+For network / Ethernet setup, compatibility depends on camera model. Use:
+
+- [crsdk.app](https://crsdk.app)
+
+and the camera help guide for model-specific steps.
+
+Not all camera models support SDK network connection, and not all network-capable models support both wired and wireless operation.
 
 ## Install
 
+From this folder:
+
 ```bash
-npm install @alpha-sdk/client
+npm install
 ```
 
-## Usage
+This installs:
 
-```typescript
-import { AlphaSDKClient } from "@alpha-sdk/client";
+- the Next.js app dependencies
+- `@alpha-sdk/api` for local server management
+- `@alpha-sdk/client` for typed REST calls
 
-const client = new AlphaSDKClient({
-  environment: "http://localhost:8080",
-});
+## Run
 
-// Discover cameras
-const listing = await client.cameras.list();
-console.log(listing.cameras);
+Development:
 
-// Connect, shoot, disconnect
-const cameraId = listing.cameras[0].id;
-await client.cameras.connect({ cameraId, mode: "remote" });
-await new Promise((r) => setTimeout(r, 500)); // settle (see Recipe 5)
-await client.properties.setPriorityKey({ cameraId, setting: "pc-remote" });
-await client.actions.afShutter({ cameraId });
-await client.cameras.disconnect({ cameraId });
+```bash
+npm run dev
 ```
 
-## Resources exposed
+Open:
 
-| Accessor | What it covers |
-|----------|----------------|
-| `client.server` | Server status, logs, shutdown |
-| `client.cameras` | Discover, connect, disconnect |
-| `client.properties` | Read/write properties (ISO, aperture, priority key, etc.) |
-| `client.actions` | Shoot, focus near/far, zoom, movie recording |
-| `client.liveView` | Enable/start/stop live view stream |
-| `client.sdCard` | List + download SD card files |
-| `client.settings` | Save-info, LUT import, settings-file up/download |
+- [http://localhost:3000](http://localhost:3000)
 
-Every REST endpoint in the OpenAPI spec has a method here.
+Production build:
 
-## Recipes — SSE, live view, server lifecycle, discovery
-
-Some patterns aren't REST and are intentionally left as app-owned code. The reference implementations live on [crsdk.app](https://crsdk.app/docs/sdk/overview#recipes):
-
-| Pattern | Recipe |
-|---------|--------|
-| Real-time events (SSE) | [Recipe 1 — SSE event consumer](https://crsdk.app/docs/sdk/recipes/sse-events) |
-| Live view frame polling | [Recipe 2 — Live view polling](https://crsdk.app/docs/sdk/recipes/live-view-polling) |
-| Server subprocess lifecycle | [Recipe 3 — Server subprocess manager](https://crsdk.app/docs/sdk/recipes/server-subprocess) |
-| Camera discovery / hot-plug | [Recipe 4 — Discovery + auto-reconnect](https://crsdk.app/docs/sdk/recipes/discovery-reconnect) |
-| Retry with backoff | [Recipe 5 — Retry + backoff](https://crsdk.app/docs/sdk/recipes/retry-backoff) |
-| React hook | [Recipe 6 — React hook](https://crsdk.app/docs/sdk/recipes/react-hook) |
-
-**Why recipes instead of a wrapper library?** These patterns are standard JS/TS idioms (`fetch` streaming, `setInterval`, `child_process.spawn`). Owning the code in your app is easier to debug, easier to modify, and easier for AI coding assistants to reason about than an opaque library abstraction.
-
-## Error handling
-
-Every non-2xx response throws a typed subclass of `AlphaSDKError`:
-
-```typescript
-import { AlphaCameraRestApi, AlphaSDKError } from "@alpha-sdk/client";
-
-const { BadRequestError, NotFoundError } = AlphaCameraRestApi;
-
-try {
-  await client.cameras.connect({ cameraId: "unknown", mode: "remote" });
-} catch (err) {
-  if (err instanceof BadRequestError) {
-    console.error("400:", (err.body as any).message);
-  } else if (err instanceof NotFoundError) {
-    console.error("404:", err.body);
-  } else if (err instanceof AlphaSDKError) {
-    console.error(`${err.statusCode}: ${err.message}`);
-  }
-}
+```bash
+npm run build
+npm run start
 ```
 
-## License
+## How server startup works
 
-MIT — see `LICENSE`.
+The browser UI does **not** spawn the native camera server directly.
+
+Instead:
+
+1. the page calls `POST /api/server`
+2. `src/app/api/server/route.ts` uses `ServerManager` from `@alpha-sdk/api`
+3. the route either:
+   - starts a local `CameraWebApp`, or
+   - adopts an already-running healthy server
+4. the page then creates a `CameraManager` against that server URL
+
+Relevant files:
+
+- `src/app/api/server/route.ts`
+- `src/lib/camera-manager.ts`
+- `src/lib/event-stream.ts`
+- `src/app/page.tsx`
+
+## Lifecycle model
+
+The app uses three layers:
+
+### 1. Server route
+
+`src/app/api/server/route.ts`
+
+- starts / stops the server
+- adopts an already-running server on `8080`
+- avoids duplicate-start races during Next.js reloads
+
+### 2. Camera lifecycle layer
+
+`src/lib/camera-manager.ts`
+
+- polls `GET /api/cameras`
+- auto-connects detected cameras
+- waits for SSE connect confirmation
+- handles reconnect after disconnect
+- exposes a bound camera helper for actions and property access
+
+### 3. Browser SSE helper
+
+`src/lib/event-stream.ts`
+
+- uses native `EventSource`
+- reconnects automatically on stream failure
+- exposes typed event listeners to the lifecycle layer and UI
+
+## Live view
+
+The app polls live-view JPEG frames over HTTP and swaps the current image in the page.
+
+The browser UI also supports:
+
+- OSD toggle
+- zoom in/out
+- focus near/far
+- AF shutter / continuous shutter
+- movie record toggle
+- SD card file listing and download
+
+## Key files to modify
+
+### UI layout
+
+- `src/app/page.tsx`
+
+### Server lifecycle
+
+- `src/app/api/server/route.ts`
+
+### Camera lifecycle
+
+- `src/lib/camera-manager.ts`
+
+### SSE behavior
+
+- `src/lib/event-stream.ts`
+
+## Troubleshooting
+
+### Camera is detected but will not connect
+
+Try this in order:
+
+1. unplug the camera
+2. turn the camera off
+3. turn the camera back on
+4. reconnect USB
+
+If it still fails:
+
+1. stop other camera apps that may hold the camera
+   - Imaging Edge Desktop
+   - Creators’ App
+2. stop any other running camera servers
+3. restart the computer
+
+### Next.js route keeps failing to start the server
+
+Check whether another server is already running on `8080`. The route will usually adopt it, but stale dev processes can interfere during reloads.
+
+Useful checks:
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+lsof -nP -iTCP:8080 -sTCP:LISTEN
+```
+
+### Live view or controls feel stale after code edits
+
+Restart the Next.js dev server. Route-module and lifecycle state can survive HMR in ways that do not match a clean startup.
+
+## Related docs
+
+- [SSE events](https://crsdk.app/docs/sdk/recipes/sse-events)
+- [Server subprocess](https://crsdk.app/docs/sdk/recipes/server-subprocess)
+- [Discovery + reconnect](https://crsdk.app/docs/sdk/recipes/discovery-reconnect)
+- [React hook](https://crsdk.app/docs/sdk/recipes/react-hook)
