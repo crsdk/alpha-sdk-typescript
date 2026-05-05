@@ -1,0 +1,10 @@
+# Hand-authored files Fern must not overwrite on regen
+LICENSE
+README.md
+CHANGELOG.md
+package.json
+tsconfig.json
+tsconfig.cjs.json
+tsconfig.esm.json
+.gitignore
+.fernignore
