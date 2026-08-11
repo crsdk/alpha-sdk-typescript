@@ -558,15 +558,18 @@ export default function Home() {
               success: true,
               data: {
                 property: p.name,
-                value: entry.current_hex_value ?? "",
-                formatted: entry.current_formatted ?? "",
+                value: entry.currentHexValue ?? entry.current_hex_value ?? "",
+                formatted:
+                  entry.currentFormatted ?? entry.current_formatted ?? "",
                 writable: String(entry.writable) as "true" | "false",
-                available_values: (entry.available_values ?? []).map(
-                  (v: any) => ({
-                    value: v.hex_value ?? String(v.value),
-                    formatted: v.formatted,
-                  })
-                ),
+                available_values: (
+                  entry.availableValues ??
+                  entry.available_values ??
+                  []
+                ).map((v: any) => ({
+                  value: v.hexValue ?? v.hex_value ?? String(v.value),
+                  formatted: v.formatted,
+                })),
               },
             }
           : null;
@@ -1248,15 +1251,21 @@ export default function Home() {
                     success: true,
                     data: {
                       property: p.name,
-                      value: entry.current_hex_value ?? "",
-                      formatted: entry.current_formatted ?? "",
+                      value:
+                        entry.currentHexValue ?? entry.current_hex_value ?? "",
+                      formatted:
+                        entry.currentFormatted ??
+                        entry.current_formatted ??
+                        "",
                       writable: String(entry.writable) as "true" | "false",
-                      available_values: (entry.available_values ?? []).map(
-                        (v: any) => ({
-                          value: v.hex_value ?? String(v.value),
-                          formatted: v.formatted,
-                        })
-                      ),
+                      available_values: (
+                        entry.availableValues ??
+                        entry.available_values ??
+                        []
+                      ).map((v: any) => ({
+                        value: v.hexValue ?? v.hex_value ?? String(v.value),
+                        formatted: v.formatted,
+                      })),
                     },
                   }
                 : null;
