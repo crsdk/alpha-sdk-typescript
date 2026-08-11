@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ServerManager } from "@alpha-sdk/api";
+import { ServerManager } from "@/lib/server-manager";
 import net from "node:net";
 
 const DEFAULT_PORT = 8080;

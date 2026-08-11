@@ -539,7 +539,7 @@ export class CameraManager {
             value: response.data.value,
             formatted: response.data.formatted,
             writable: response.data.writable ? "true" : "false",
-            available_values: response.data.available_values?.map((value: AlphaSDK.AvailableValue) => ({
+            available_values: response.data.availableValues?.map((value: AlphaSDK.AvailableValue) => ({
               value: value.value,
               formatted: value.formatted,
             })),
@@ -565,7 +565,7 @@ export class CameraManager {
   private mapSdCardListResponse(response: AlphaSDK.SdCardFileListResponse): SDCardFilesResponse {
     return {
       success: response.success,
-      file_count: response.file_count,
+      file_count: response.fileCount,
       files: response.files,
     };
   }

@@ -50,8 +50,28 @@ npm install
 This installs:
 
 - the Next.js app dependencies
-- `@alpha-sdk/api` for local server management
 - `@alpha-sdk/client` for typed REST calls
+
+## Camera server
+
+This app talks to the native **Alpha Camera REST server** (`CameraWebApp`), which
+is built from source — it needs Sony's Camera Remote SDK and is never shipped as a
+prebuilt binary. Build it once with the [`crsdk`](https://github.com/crsdk/alpha-sdk-api) CLI:
+
+```bash
+git clone https://github.com/crsdk/alpha-sdk-api.git
+cd alpha-sdk-api
+./crsdk install --zip <sony-camera-remote-sdk.zip>
+./crsdk build
+```
+
+Then either **let this app spawn it** by pointing `CRSDK_BINARY` at the built binary:
+
+```bash
+export CRSDK_BINARY=/path/to/alpha-sdk-api/api/server/build/CameraWebApp
+```
+
+…or **run it yourself** (`./crsdk start`) and the app will adopt the running server.
 
 ## Run
 
@@ -79,9 +99,11 @@ The browser UI does **not** spawn the native camera server directly.
 Instead:
 
 1. the page calls `POST /api/server`
-2. `src/app/api/server/route.ts` uses `ServerManager` from `@alpha-sdk/api`
+2. `src/app/api/server/route.ts` uses a small vendored `ServerManager`
+   (`src/lib/server-manager.ts`) — the app carries its own copy rather than
+   depending on a published package
 3. the route either:
-   - starts a local `CameraWebApp`, or
+   - spawns a local `CameraWebApp` from `$CRSDK_BINARY`, or
    - adopts an already-running healthy server
 4. the page then creates a `CameraManager` against that server URL
 
@@ -144,6 +166,7 @@ The browser UI also supports:
 ### Server lifecycle
 
 - `src/app/api/server/route.ts`
+- `src/lib/server-manager.ts` — vendored spawn/adopt logic (`$CRSDK_BINARY`)
 
 ### Camera lifecycle
 

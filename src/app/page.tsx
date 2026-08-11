@@ -1992,7 +1992,7 @@ export default function Home() {
                       <ScrollArea className="h-40 w-full max-w-full overflow-hidden rounded border bg-muted/30 p-2">
                         <div className="w-full min-w-0 space-y-1">
                           {sdFiles.map((f) => {
-                            const key = `${f.content_id}:${f.file_id}`;
+                            const key = `${f.contentId}:${f.fileId}`;
                             return (
                               <label
                                 key={key}
@@ -2002,9 +2002,9 @@ export default function Home() {
                                   checked={sdSelected.has(key)}
                                   onCheckedChange={() => toggleFileSelect(key)}
                                 />
-                                <span className="min-w-0 truncate">{f.file_path}</span>
+                                <span className="min-w-0 truncate">{f.filePath}</span>
                                 <span className="col-start-2 min-w-0 text-[11px] text-muted-foreground">
-                                  {(f.file_size / 1024 / 1024).toFixed(1)}MB
+                                  {(f.fileSize / 1024 / 1024).toFixed(1)}MB
                                 </span>
                               </label>
                             );
