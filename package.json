@@ -9,8 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@alpha-sdk/api": "^1.0.7",
-    "@alpha-sdk/client": "^0.3.0",
+    "@alpha-sdk/client": "^0.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
