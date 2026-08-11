@@ -9,14 +9,12 @@ This example shows how to:
 - handle camera discovery, connect, reconnect, and SSE updates in app code
 - render live view and common camera controls in a browser UI
 
-It is the TypeScript counterpart to the macOS Swift example app.
-
 ## Requirements
 
 - Node.js 20+
 - npm
 - a camera supported by the SDK
-- macOS / Windows / Linux machine that can run the published camera server binary
+- macOS / Windows / Linux machine that can build and run the camera server (built from source — see [Camera server](#camera-server) below)
 
 ## Camera setup
 
@@ -33,7 +31,7 @@ Some models also require:
 
 For network / Ethernet setup, compatibility depends on camera model. Use:
 
-- [crsdk.app](https://crsdk.app)
+- [the Alpha Camera REST API docs](https://crsdk.github.io/alpha-sdk-api/)
 
 and the camera help guide for model-specific steps.
 
@@ -41,9 +39,13 @@ Not all camera models support SDK network connection, and not all network-capabl
 
 ## Install
 
-From this folder:
+Clone the repo, then install **from inside the app folder** — run `npm install`
+in `alpha-sdk-typescript/`, not in a parent directory (a stray `package-lock.json`
+one level up will confuse the build's workspace-root detection):
 
 ```bash
+git clone https://github.com/crsdk/alpha-sdk-typescript.git
+cd alpha-sdk-typescript
 npm install
 ```
 
@@ -212,7 +214,7 @@ Restart the Next.js dev server. Route-module and lifecycle state can survive HMR
 
 ## Related docs
 
-- [SSE events](https://crsdk.app/docs/sdk/recipes/sse-events)
-- [Server subprocess](https://crsdk.app/docs/sdk/recipes/server-subprocess)
-- [Discovery + reconnect](https://crsdk.app/docs/sdk/recipes/discovery-reconnect)
-- [React hook](https://crsdk.app/docs/sdk/recipes/react-hook)
+- [SSE events](https://crsdk.github.io/alpha-sdk-api/sdk/recipes/sse-events/)
+- [Server subprocess](https://crsdk.github.io/alpha-sdk-api/sdk/recipes/server-subprocess/)
+- [Discovery + reconnect](https://crsdk.github.io/alpha-sdk-api/sdk/recipes/discovery-reconnect/)
+- [React hook](https://crsdk.github.io/alpha-sdk-api/sdk/recipes/react-hook/)
